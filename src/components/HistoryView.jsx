@@ -2,11 +2,19 @@ import { useMemo } from 'react'
 import { useHealthData } from '../context/HealthDataContext'
 
 function HistoryView() {
-  const { moodEntries, deleteMoodEntry } = useHealthData()
+  const {
+    moodEntries,
+    deleteMoodEntry,
+    sleepEntries = [],
+    deleteSleepEntry,
+  } = useHealthData()
 
+  // merge both trackers into a single list with a `type` flag
   const sortedEntries = useMemo(() => {
-    return [...moodEntries].sort((a, b) => b.id - a.id)
-  }, [moodEntries])
+    const moodWithType = moodEntries.map(e => ({ ...e, type: 'mood' }))
+    const sleepWithType = sleepEntries.map(e => ({ ...e, type: 'sleep' }))
+    return [...moodWithType, ...sleepWithType].sort((a, b) => b.id - a.id)
+  }, [moodEntries, sleepEntries])
 
   const groupedByDate = useMemo(() => {
     const grouped = {}
@@ -21,7 +29,9 @@ function HistoryView() {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Mood History</h2>
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+        Health History
+      </h2>
       
       {Object.keys(groupedByDate).length === 0 ? (
         <p className="text-gray-500 text-center py-8">
@@ -42,7 +52,9 @@ function HistoryView() {
                     >
                       <div className="flex-1">
                         <span className="font-medium text-gray-800">
-                          Mood: {entry.mood}
+                          {entry.type === 'mood'
+                            ? `Mood: ${entry.mood}`
+                            : `Sleep: ${entry.hours} hour${entry.hours === 1 ? '' : 's'}`}
                         </span>
                         <span className="text-gray-500 text-sm ml-2">
                           • {entry.time}
@@ -50,8 +62,16 @@ function HistoryView() {
                       </div>
                       <button
                         onClick={() => {
-                          if (window.confirm('Delete this mood entry?')) {
-                            deleteMoodEntry(entry.id)
+                          const confirmMsg =
+                            entry.type === 'mood'
+                              ? 'Delete this mood entry?'
+                              : 'Delete this sleep entry?'
+                          if (window.confirm(confirmMsg)) {
+                            if (entry.type === 'mood') {
+                              deleteMoodEntry(entry.id)
+                            } else {
+                              deleteSleepEntry(entry.id)
+                            }
                           }
                         }}
                         className="text-red-500 hover:text-red-700 font-medium text-sm ml-4 px-2 py-1 rounded hover:bg-red-50 transition-colors"

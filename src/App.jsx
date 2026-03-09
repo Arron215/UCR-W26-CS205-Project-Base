@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { HealthDataProvider } from './context/HealthDataContext'
 import MoodTracker from './modules/MoodTracker'
+import SleepTracker from './modules/SleepTracker'
 import DailyGraph from './components/DailyGraph'
 import WeeklyGraph from './components/WeeklyGraph'
 import HistoryView from './components/HistoryView'
@@ -15,10 +16,10 @@ function App() {
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <header className="mb-8">
             <h1 className="text-4xl font-bold text-gray-800 mb-2">
-              Mood Tracking App
+              Health Tracker App
             </h1>
             <p className="text-gray-600">
-              Track how you feel over time with a simple 1–5 mood scale
+              Track how you feel over time with simple mood and sleep logs
             </p>
           </header>
 
@@ -61,6 +62,7 @@ function App() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <MoodTracker />
+                <SleepTracker />
                 <DailyGraph />
                 <WeeklyGraph />
               </div>
