@@ -17,8 +17,8 @@ export function HealthDataProvider({ children }) {
     async function initialize() {
       // Load from localStorage first
       const loaded = loadData()
-      setMoodEntries(loaded.moodEntries)
-      setSleepEntries(loaded.sleepEntries || [])
+      setMoodEntries(Array.isArray(loaded.moodEntries) ? loaded.moodEntries : [])
+      setSleepEntries(Array.isArray(loaded.sleepEntries) ? loaded.sleepEntries : [])
       setIsLoaded(true)
       
       // Try to set up file auto-save
@@ -38,8 +38,8 @@ export function HealthDataProvider({ children }) {
               : null
             
             if (!storageDate || (fileDate && fileDate > storageDate)) {
-              setMoodEntries(fileData.moodEntries || [])
-              setSleepEntries(fileData.sleepEntries || [])
+              setMoodEntries(Array.isArray(fileData.moodEntries) ? fileData.moodEntries : [])
+              setSleepEntries(Array.isArray(fileData.sleepEntries) ? fileData.sleepEntries : [])
               saveData(fileData.moodEntries || [], fileData.sleepEntries || [])
             }
           }
@@ -112,9 +112,9 @@ export function HealthDataProvider({ children }) {
       
       const data = await readFile(handle)
       if (data?.moodEntries || data?.sleepEntries) {
-        setMoodEntries(data.moodEntries || [])
-        setSleepEntries(data.sleepEntries || [])
-        saveData(data.moodEntries || [], data.sleepEntries || [])
+        setMoodEntries(Array.isArray(data.moodEntries) ? data.moodEntries : [])
+        setSleepEntries(Array.isArray(data.sleepEntries) ? data.sleepEntries : [])
+        saveData(Array.isArray(data.moodEntries) ? data.moodEntries : [], Array.isArray(data.sleepEntries) ? data.sleepEntries : [])
         return true
       }
     }
@@ -122,24 +122,24 @@ export function HealthDataProvider({ children }) {
   }
 
   const addMoodEntry = (entry) => {
-    setMoodEntries([...moodEntries, entry])
+    setMoodEntries(prev => Array.isArray(prev) ? [...prev, entry] : [entry])
   }
 
   const deleteMoodEntry = (id) => {
-    setMoodEntries(moodEntries.filter(entry => entry.id !== id))
+    setMoodEntries(prev => Array.isArray(prev) ? prev.filter(entry => entry.id !== id) : [])
   }
 
   const addSleepEntry = (entry) => {
-    setSleepEntries([...sleepEntries, entry])
+    setSleepEntries(prev => Array.isArray(prev) ? [...prev, entry] : [entry])
   }
 
   const deleteSleepEntry = (id) => {
-    setSleepEntries(sleepEntries.filter(entry => entry.id !== id))
+    setSleepEntries(prev => Array.isArray(prev) ? prev.filter(entry => entry.id !== id) : [])
   }
 
-  const setAllData = (moodEntries, sleepEntries) => {
-    setMoodEntries(moodEntries)
-    setSleepEntries(sleepEntries)
+  const setAllData = (moodData, sleepData) => {
+    setMoodEntries(Array.isArray(moodData) ? moodData : [])
+    setSleepEntries(Array.isArray(sleepData) ? sleepData : [])
   }
 
   const exportData = () => {
@@ -155,7 +155,6 @@ export function HealthDataProvider({ children }) {
     try {
       const data = JSON.parse(jsonString)
       if (data.moodEntries && Array.isArray(data.moodEntries)) {
-        // sleepEntries may be missing for older exports
         const sleeps = Array.isArray(data.sleepEntries) ? data.sleepEntries : []
         setAllData(data.moodEntries, sleeps)
         return true
