@@ -7,6 +7,7 @@ import WaterTracker from './modules/WaterTracker'
 import DailyGraph from './components/DailyGraph'
 import WeeklyGraph from './components/WeeklyGraph'
 import TrendGraph from './components/TrendGraph'
+import MoodHeatmap from './components/MoodHeatmap'
 import HistoryView from './components/HistoryView'
 import FileManager from './components/FileManager'
 import Login from './components/Login'
@@ -101,6 +102,9 @@ function AppContent() {
 
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-6">
+                <MoodHeatmap />
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <MoodTracker />
                 <SleepTracker />
