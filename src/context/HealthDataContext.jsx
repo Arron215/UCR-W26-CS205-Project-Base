@@ -242,6 +242,33 @@ export function HealthDataProvider({ children }) {
     setWaterEntries(prev => Array.isArray(prev) ? [...prev, entry] : [entry])
   }
 
+  const addOrUpdateWaterEntry = (date, glassesToAdd) => {
+    setWaterEntries(prev => {
+      const entries = Array.isArray(prev) ? prev : []
+      const existingIndex = entries.findIndex(e => e.date === date)
+      const now = new Date()
+      
+      if (existingIndex >= 0) {
+        const updated = [...entries]
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          glasses: (updated[existingIndex].glasses || 0) + glassesToAdd,
+          timestamp: now.toISOString(),
+          time: now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+        }
+        return updated
+      } else {
+        return [...entries, {
+          id: Date.now(),
+          glasses: glassesToAdd,
+          timestamp: now.toISOString(),
+          date: date,
+          time: now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+        }]
+      }
+    })
+  }
+
   const deleteWaterEntry = (id) => {
     setWaterEntries(prev => Array.isArray(prev) ? prev.filter(entry => entry.id !== id) : [])
   }
@@ -266,14 +293,17 @@ export function HealthDataProvider({ children }) {
   const importData = (jsonString) => {
     try {
       const data = JSON.parse(jsonString)
+      console.log('Imported data keys:', Object.keys(data))
       if (data.moodEntries && Array.isArray(data.moodEntries)) {
         const sleeps = Array.isArray(data.sleepEntries) ? data.sleepEntries : []
         const waters = Array.isArray(data.waterEntries) ? data.waterEntries : []
         const goal = typeof data.waterGoal === 'number' ? data.waterGoal : 8
+        console.log('Importing:', data.moodEntries.length, 'mood,', sleeps.length, 'sleep,', waters.length, 'water entries')
         setAllData(data.moodEntries, sleeps, waters)
         setWaterGoal(goal)
         return true
       }
+      console.log('Import failed: moodEntries missing or not array')
       return false
     } catch (error) {
       console.error('Error importing data:', error)
@@ -291,6 +321,7 @@ export function HealthDataProvider({ children }) {
         addMoodEntry,
         addSleepEntry,
         addWaterEntry,
+        addOrUpdateWaterEntry,
         deleteMoodEntry,
         deleteSleepEntry,
         deleteWaterEntry,

@@ -116,12 +116,12 @@ function MoodHeatmap() {
       <div className="overflow-x-auto">
         <div className="inline-block min-w-max">
           <div className="flex mb-1">
-            <div className="w-6" />
+            <div className="w-8" />
             {months.map((m, i) => (
               <div 
                 key={i} 
                 className="text-xs text-gray-500 dark:text-gray-400"
-                style={{ marginLeft: i === 0 ? m.week * 14 : (m.week - months[i-1].week) * 14 - 20, width: 32 }}
+                style={{ marginLeft: i === 0 ? m.week * 16 : (m.week - months[i-1].week) * 16 - 24, width: 40 }}
               >
                 {m.month}
               </div>
@@ -129,24 +129,24 @@ function MoodHeatmap() {
           </div>
           
           <div className="flex">
-            <div className="flex flex-col gap-1 mr-1 text-xs text-gray-400 w-6">
-              <span className="h-3" />
-              <span className="h-3">Mon</span>
-              <span className="h-3" />
-              <span className="h-3">Wed</span>
-              <span className="h-3" />
-              <span className="h-3">Fri</span>
-              <span className="h-3" />
+            <div className="flex flex-col gap-1 mr-2 text-xs text-gray-400 w-8">
+              <span className="h-3.5" />
+              <span className="h-3.5">Mon</span>
+              <span className="h-3.5" />
+              <span className="h-3.5">Wed</span>
+              <span className="h-3.5" />
+              <span className="h-3.5">Fri</span>
+              <span className="h-3.5" />
             </div>
             
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1">
+                <div key={weekIndex} className="flex flex-col gap-1.5">
                   {week.map((day, dayIndex) => (
                     <div
                       key={dayIndex}
                       title={getTitle(day)}
-                      className={`w-3 h-3 rounded-sm ${getColorClass(day)} transition-colors cursor-pointer hover:ring-2 hover:ring-indigo-500`}
+                      className={`w-3.5 h-3.5 rounded-sm ${getColorClass(day)} transition-colors cursor-pointer hover:ring-2 hover:ring-indigo-500`}
                     />
                   ))}
                 </div>

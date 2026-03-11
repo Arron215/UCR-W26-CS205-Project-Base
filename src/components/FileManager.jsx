@@ -38,6 +38,9 @@ function FileManager() {
         setImportText(content)
         handleImport(content)
       }
+      reader.onerror = () => {
+        setImportError('Error reading file')
+      }
       reader.readAsText(file)
     }
   }
@@ -46,7 +49,7 @@ function FileManager() {
     setImportError('')
     setImportSuccess(false)
     
-    if (!jsonString.trim()) {
+    if (!jsonString || !jsonString.trim()) {
       setImportError(t('provideJsonData'))
       return
     }

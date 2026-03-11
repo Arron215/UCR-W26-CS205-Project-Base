@@ -8,14 +8,17 @@ function HistoryView() {
     deleteMoodEntry,
     sleepEntries = [],
     deleteSleepEntry,
+    waterEntries = [],
+    deleteWaterEntry,
   } = useHealthData()
   const { t } = useI18n()
 
   const sortedEntries = useMemo(() => {
     const moodWithType = moodEntries.map(e => ({ ...e, type: 'mood' }))
     const sleepWithType = sleepEntries.map(e => ({ ...e, type: 'sleep' }))
-    return [...moodWithType, ...sleepWithType].sort((a, b) => b.id - a.id)
-  }, [moodEntries, sleepEntries])
+    const waterWithType = waterEntries.map(e => ({ ...e, type: 'water' }))
+    return [...moodWithType, ...sleepWithType, ...waterWithType].sort((a, b) => b.id - a.id)
+  }, [moodEntries, sleepEntries, waterEntries])
 
   const groupedByDate = useMemo(() => {
     const grouped = {}
@@ -55,7 +58,9 @@ function HistoryView() {
                         <span className="font-medium text-gray-800 dark:text-white">
                           {entry.type === 'mood'
                             ? `${t('moodEntry')}: ${entry.mood}`
-                            : `${t('sleepEntry')}: ${entry.hours} ${entry.hours === 1 ? t('hour') : t('hourPlural')}`}
+                            : entry.type === 'sleep'
+                            ? `${t('sleepEntry')}: ${entry.hours} ${entry.hours === 1 ? t('hour') : t('hourPlural')}`
+                            : `${t('waterEntry')}: ${entry.glasses} ${entry.glasses === 1 ? t('glass') : t('glasses')}`}
                         </span>
                         <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">
                           • {entry.time}
@@ -63,12 +68,21 @@ function HistoryView() {
                       </div>
                       <button
                         onClick={() => {
-                          const confirmMsg = entry.type === 'mood' ? t('confirmDelete') : t('confirmDeleteSleep')
+                          let confirmMsg
+                          if (entry.type === 'mood') {
+                            confirmMsg = t('confirmDelete')
+                          } else if (entry.type === 'sleep') {
+                            confirmMsg = t('confirmDeleteSleep')
+                          } else {
+                            confirmMsg = t('confirmDeleteWater')
+                          }
                           if (window.confirm(confirmMsg)) {
                             if (entry.type === 'mood') {
                               deleteMoodEntry(entry.id)
-                            } else {
+                            } else if (entry.type === 'sleep') {
                               deleteSleepEntry(entry.id)
+                            } else {
+                              deleteWaterEntry(entry.id)
                             }
                           }
                         }}

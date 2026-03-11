@@ -167,7 +167,7 @@ function TrendGraph() {
             yAxisId="mood"
             type="monotone" 
             dataKey="mood" 
-            stroke="#6366f1" 
+            stroke="#eab308" 
             strokeWidth={2}
             name={t('mood')}
             connectNulls
