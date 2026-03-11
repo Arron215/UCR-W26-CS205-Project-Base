@@ -6,6 +6,7 @@ import SleepTracker from './modules/SleepTracker'
 import WaterTracker from './modules/WaterTracker'
 import DailyGraph from './components/DailyGraph'
 import WeeklyGraph from './components/WeeklyGraph'
+import TrendGraph from './components/TrendGraph'
 import HistoryView from './components/HistoryView'
 import FileManager from './components/FileManager'
 import Login from './components/Login'
@@ -106,6 +107,7 @@ function AppContent() {
                 <WaterTracker />
                 <DailyGraph />
                 <WeeklyGraph />
+                <TrendGraph />
               </div>
             </div>
           )}
