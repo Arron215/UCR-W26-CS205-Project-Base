@@ -1,21 +1,21 @@
-async function hashEmail(email) {
+async function hashCredential(email, password) {
   const encoder = new TextEncoder()
-  const data = encoder.encode(email.toLowerCase().trim())
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const combined = encoder.encode(email.toLowerCase().trim() + '|' + password)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', combined)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-async function deriveKeyFromEmail(email) {
-  const hash = await hashEmail(email)
+async function deriveKeyFromCredentials(email, password) {
+  const hash = await hashCredential(email, password)
   return hash
 }
 
-async function encryptData(data, email) {
-  if (!email || !data) return data
+async function encryptData(data, email, password) {
+  if (!email || !password || !data) return data
   
   try {
-    const key = await deriveKeyFromEmail(email)
+    const key = await deriveKeyFromCredentials(email, password)
     const jsonString = JSON.stringify(data)
     const encoded = new TextEncoder().encode(jsonString)
     
@@ -38,7 +38,7 @@ async function encryptData(data, email) {
     
     return {
       _encrypted: true,
-      _emailHash: await hashEmail(email),
+      _credentialHash: await hashCredential(email, password),
       data: btoa(String.fromCharCode(...combined))
     }
   } catch {
@@ -46,16 +46,16 @@ async function encryptData(data, email) {
   }
 }
 
-async function decryptData(encryptedObj, email) {
-  if (!encryptedObj || !encryptedObj._encrypted || !email) return null
+async function decryptData(encryptedObj, email, password) {
+  if (!encryptedObj || !encryptedObj._encrypted || !email || !password) return null
   
   try {
-    const emailHash = await hashEmail(email)
-    if (encryptedObj._emailHash !== emailHash) {
+    const credentialHash = await hashCredential(email, password)
+    if (encryptedObj._credentialHash !== credentialHash) {
       return null
     }
     
-    const key = await deriveKeyFromEmail(email)
+    const key = await deriveKeyFromCredentials(email, password)
     const encryptedData = Uint8Array.from(atob(encryptedObj.data), c => c.charCodeAt(0))
     const iv = encryptedData.slice(0, 12)
     const ciphertext = encryptedData.slice(12)
@@ -82,4 +82,4 @@ function isEncryptedData(data) {
   return data && data._encrypted === true
 }
 
-export { encryptData, decryptData, isEncryptedData, hashEmail }
+export { encryptData, decryptData, isEncryptedData, hashCredential }

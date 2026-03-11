@@ -4,6 +4,7 @@ import { useI18n } from '../context/I18nContext'
 
 function Login() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const { login } = useAuth()
   const { t } = useI18n()
@@ -17,8 +18,13 @@ function Login() {
       return
     }
     
+    if (!password || password.length < 1) {
+      setError(t('invalidPassword'))
+      return
+    }
+    
     setError('')
-    login(email)
+    login(email, password)
   }
 
   return (
@@ -32,7 +38,7 @@ function Login() {
         </p>
         
         <form onSubmit={handleSubmit}>
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('email')}
             </label>
@@ -44,10 +50,25 @@ function Login() {
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-colors"
               required
             />
-            {error && (
-              <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
-            )}
           </div>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('password')}
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-colors"
+              required
+            />
+          </div>
+          
+          {error && (
+            <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
           
           <button
             type="submit"

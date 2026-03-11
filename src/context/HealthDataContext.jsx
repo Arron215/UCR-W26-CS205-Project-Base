@@ -7,8 +7,9 @@ import { useAuth } from './AuthContext'
 const HealthDataContext = createContext()
 
 export function HealthDataProvider({ children }) {
-  const { user } = useAuth()
+  const { user, password } = useAuth()
   const userEmail = user?.email
+  const userPassword = password
   
   const [moodEntries, setMoodEntries] = useState([])
   const [sleepEntries, setSleepEntries] = useState([])
@@ -33,10 +34,10 @@ export function HealthDataProvider({ children }) {
       }
       
       // Load from localStorage first
-      const loaded = await loadData(userEmail)
+      const loaded = await loadData(userEmail, userPassword)
       
       if (loaded && isEncryptedData(loaded)) {
-        const decrypted = await decryptData(loaded, userEmail)
+        const decrypted = await decryptData(loaded, userEmail, userPassword)
         if (decrypted) {
           setMoodEntries(Array.isArray(decrypted.moodEntries) ? decrypted.moodEntries : [])
           setSleepEntries(Array.isArray(decrypted.sleepEntries) ? decrypted.sleepEntries : [])
@@ -73,7 +74,7 @@ export function HealthDataProvider({ children }) {
             let waterData = []
             
             if (isEncryptedData(fileData)) {
-              const decrypted = decryptData(fileData, userEmail)
+              const decrypted = await decryptData(fileData, userEmail, userPassword)
               if (decrypted) {
                 moodData = Array.isArray(decrypted.moodEntries) ? decrypted.moodEntries : []
                 sleepData = Array.isArray(decrypted.sleepEntries) ? decrypted.sleepEntries : []
@@ -95,7 +96,7 @@ export function HealthDataProvider({ children }) {
                 setMoodEntries(moodData)
                 setSleepEntries(sleepData)
                 setWaterEntries(waterData)
-                await saveData(userEmail, moodData, sleepData, waterData)
+                await saveData(userEmail, userPassword, moodData, sleepData, waterData)
               }
             }
           }
@@ -112,22 +113,22 @@ export function HealthDataProvider({ children }) {
             sleepEntries: sleepEntries || [],
             waterEntries: waterEntries || [],
             lastSaved: new Date().toISOString()
-          }, userEmail))
+          }, userEmail, userPassword))
         }
       }
     }
     
     initialize()
-  }, [userEmail])
+  }, [userEmail, userPassword])
 
   // Auto-save to localStorage and file when data changes
   useEffect(() => {
-    if (isLoaded && userEmail) {
-      saveData(userEmail, moodEntries, sleepEntries, waterEntries).then(() => {
+    if (isLoaded && userEmail && userPassword) {
+      saveData(userEmail, userPassword, moodEntries, sleepEntries, waterEntries).then(() => {
         saveToFile()
       })
     }
-  }, [moodEntries, sleepEntries, waterEntries, isLoaded, userEmail])
+  }, [moodEntries, sleepEntries, waterEntries, isLoaded, userEmail, userPassword])
 
   // Load water goal for current user
   useEffect(() => {
@@ -150,7 +151,7 @@ export function HealthDataProvider({ children }) {
 
   async function saveToFile() {
     const handle = fileHandleRef.current
-    if (!handle || !userEmail) return
+    if (!handle || !userEmail || !userPassword) return
 
     setFileStatus('saving')
     const success = await writeFile(handle, await encryptData({
@@ -158,7 +159,7 @@ export function HealthDataProvider({ children }) {
       sleepEntries,
       waterEntries,
       lastSaved: new Date().toISOString()
-    }, userEmail))
+    }, userEmail, userPassword))
     
     if (success) {
       setFileStatus('saved')
@@ -197,7 +198,7 @@ export function HealthDataProvider({ children }) {
         let waterData = []
         
         if (isEncryptedData(data)) {
-          const decrypted = await decryptData(data, userEmail)
+          const decrypted = await decryptData(data, userEmail, userPassword)
           if (decrypted) {
             moodData = Array.isArray(decrypted.moodEntries) ? decrypted.moodEntries : []
             sleepData = Array.isArray(decrypted.sleepEntries) ? decrypted.sleepEntries : []
@@ -213,7 +214,7 @@ export function HealthDataProvider({ children }) {
           setMoodEntries(moodData)
           setSleepEntries(sleepData)
           setWaterEntries(waterData)
-          await saveData(userEmail, moodData, sleepData, waterData)
+          await saveData(userEmail, userPassword, moodData, sleepData, waterData)
           return true
         }
       }

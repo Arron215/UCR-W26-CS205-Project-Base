@@ -3,15 +3,15 @@ import { encryptData, decryptData, isEncryptedData } from './encryption'
 const STORAGE_KEY = 'healthTrackingData'
 const FILE_HANDLE_KEY = 'healthTrackingFileHandle'
 
-export async function loadData(userEmail) {
+export async function loadData(email, password) {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       const data = JSON.parse(stored)
       
       if (isEncryptedData(data)) {
-        if (!userEmail) return { moodEntries: [], sleepEntries: [], waterEntries: [] }
-        const decrypted = await decryptData(data, userEmail)
+        if (!email || !password) return { moodEntries: [], sleepEntries: [], waterEntries: [] }
+        const decrypted = await decryptData(data, email, password)
         return decrypted || { moodEntries: [], sleepEntries: [], waterEntries: [] }
       }
       
@@ -31,10 +31,10 @@ export async function loadData(userEmail) {
   }
 }
 
-export async function saveData(userEmail, moodEntries, sleepEntries, waterEntries) {
+export async function saveData(email, password, moodEntries, sleepEntries, waterEntries) {
   try {
-    if (userEmail) {
-      const encrypted = await encryptData({ moodEntries, sleepEntries, waterEntries }, userEmail)
+    if (email && password) {
+      const encrypted = await encryptData({ moodEntries, sleepEntries, waterEntries }, email, password)
       localStorage.setItem(STORAGE_KEY, JSON.stringify(encrypted))
     } else {
       const data = { moodEntries, sleepEntries, waterEntries }
