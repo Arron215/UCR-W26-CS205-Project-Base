@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { useHealthData } from '../context/HealthDataContext'
+import { useI18n } from '../context/I18nContext'
 
 function TrendGraph() {
   const { moodEntries, sleepEntries, waterEntries } = useHealthData()
   const [range, setRange] = useState('month')
+  const { t } = useI18n()
 
   const trendData = useMemo(() => {
     const now = new Date()
@@ -85,10 +87,10 @@ function TrendGraph() {
   }, [moodEntries, sleepEntries, waterEntries, range])
 
   const ranges = [
-    { value: 'week', label: '7 Days' },
-    { value: 'month', label: '1 Month' },
-    { value: 'year', label: '1 Year' },
-    { value: 'all', label: 'All Time' },
+    { value: 'week', label: t('sevenDays') },
+    { value: 'month', label: t('oneMonth') },
+    { value: 'year', label: t('oneYear') },
+    { value: 'all', label: t('allTime') },
   ]
 
   const hasData = trendData.some(d => d.mood !== null || d.sleep !== null || d.water !== null)
@@ -97,7 +99,7 @@ function TrendGraph() {
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Trends
+          {t('trends')}
         </h3>
         <div className="flex flex-wrap gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
           {ranges.map(r => (
@@ -119,7 +121,7 @@ function TrendGraph() {
       {!hasData && (
         <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <p className="text-sm text-yellow-700 dark:text-yellow-400">
-            No data available for this time range. Start tracking to see trends.
+            {t('noDataRange')}
           </p>
         </div>
       )}
@@ -167,7 +169,7 @@ function TrendGraph() {
             dataKey="mood" 
             stroke="#6366f1" 
             strokeWidth={2}
-            name="Mood (1-5)"
+            name={t('mood')}
             connectNulls
             dot={{ r: 3 }}
             activeDot={{ r: 5 }}
@@ -178,7 +180,7 @@ function TrendGraph() {
             dataKey="sleep" 
             stroke="#10b981" 
             strokeWidth={2}
-            name="Sleep (hrs)"
+            name={t('sleep')}
             connectNulls
             dot={{ r: 3 }}
             activeDot={{ r: 5 }}
@@ -189,7 +191,7 @@ function TrendGraph() {
             dataKey="water" 
             stroke="#3b82f6" 
             strokeWidth={2}
-            name="Water (glasses)"
+            name={t('water')}
             connectNulls
             dot={{ r: 3 }}
             activeDot={{ r: 5 }}

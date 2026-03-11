@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useHealthData } from '../context/HealthDataContext'
+import { useI18n } from '../context/I18nContext'
 
 function HistoryView() {
   const {
@@ -8,8 +9,8 @@ function HistoryView() {
     sleepEntries = [],
     deleteSleepEntry,
   } = useHealthData()
+  const { t } = useI18n()
 
-  // merge both trackers into a single list with a `type` flag
   const sortedEntries = useMemo(() => {
     const moodWithType = moodEntries.map(e => ({ ...e, type: 'mood' }))
     const sleepWithType = sleepEntries.map(e => ({ ...e, type: 'sleep' }))
@@ -28,44 +29,41 @@ function HistoryView() {
   }, [sortedEntries])
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-        Health History
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">
+        {t('healthHistory')}
       </h2>
       
       {Object.keys(groupedByDate).length === 0 ? (
-        <p className="text-gray-500 text-center py-8">
-          No history yet. Start logging your mood to see it here.
+        <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+          {t('noHistoryYet')}
         </p>
       ) : (
         <div className="space-y-6">
           {Object.entries(groupedByDate)
             .sort((a, b) => new Date(b[0]) - new Date(a[0]))
             .map(([date, entries]) => (
-              <div key={date} className="border-b border-gray-200 pb-4 last:border-b-0">
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">{date}</h3>
+              <div key={date} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">{date}</h3>
                 <div className="space-y-2">
                   {entries.map((entry) => (
                     <div
                       key={entry.id}
-                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     >
                       <div className="flex-1">
-                        <span className="font-medium text-gray-800">
+                        <span className="font-medium text-gray-800 dark:text-white">
                           {entry.type === 'mood'
-                            ? `Mood: ${entry.mood}`
-                            : `Sleep: ${entry.hours} hour${entry.hours === 1 ? '' : 's'}`}
+                            ? `${t('moodEntry')}: ${entry.mood}`
+                            : `${t('sleepEntry')}: ${entry.hours} ${entry.hours === 1 ? t('hour') : t('hourPlural')}`}
                         </span>
-                        <span className="text-gray-500 text-sm ml-2">
+                        <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">
                           • {entry.time}
                         </span>
                       </div>
                       <button
                         onClick={() => {
-                          const confirmMsg =
-                            entry.type === 'mood'
-                              ? 'Delete this mood entry?'
-                              : 'Delete this sleep entry?'
+                          const confirmMsg = entry.type === 'mood' ? t('confirmDelete') : t('confirmDeleteSleep')
                           if (window.confirm(confirmMsg)) {
                             if (entry.type === 'mood') {
                               deleteMoodEntry(entry.id)
@@ -74,10 +72,10 @@ function HistoryView() {
                             }
                           }
                         }}
-                        className="text-red-500 hover:text-red-700 font-medium text-sm ml-4 px-2 py-1 rounded hover:bg-red-50 transition-colors"
-                        title="Delete this entry"
+                        className="text-red-500 hover:text-red-700 font-medium text-sm ml-4 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                        title={t('deleteEntry')}
                       >
-                        Delete
+                        {t('deleteEntry')}
                       </button>
                     </div>
                   ))}

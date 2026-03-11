@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useHealthData } from '../context/HealthDataContext'
+import { useI18n } from '../context/I18nContext'
 import { getTodayFormatted } from '../utils/helpers'
 
 function DailyGraph() {
   const { moodEntries } = useHealthData()
+  const { t } = useI18n()
 
   const dailyData = useMemo(() => {
     const todayStr = getTodayFormatted()
@@ -36,23 +38,23 @@ function DailyGraph() {
   const hasTodayData = dailyData.length > 0
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-2">Today&apos;s Mood</h3>
-      <p className="text-sm text-gray-500 mb-4">{todayStr}</p>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">{t('todaysMood')}</h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{todayStr}</p>
       {!hasTodayData && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-700">
-            No moods logged for today yet. Record how you feel to see it here.
+        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-sm text-yellow-700 dark:text-yellow-400">
+            {t('noMoodsYet')}
           </p>
         </div>
       )}
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={dailyData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="time" />
-          <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} />
-          <Tooltip />
-          <Line type="monotone" dataKey="mood" stroke="#6366f1" strokeWidth={2} name="Mood (1–5)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-600" />
+          <XAxis dataKey="time" className="dark:text-gray-400" />
+          <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} className="dark:text-gray-400" />
+          <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
+          <Line type="monotone" dataKey="mood" stroke="#6366f1" strokeWidth={2} name={t('mood')} />
         </LineChart>
       </ResponsiveContainer>
     </div>

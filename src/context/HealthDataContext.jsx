@@ -1,30 +1,60 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { loadData, saveData, saveFileHandleInfo, getFileHandleInfo } from '../utils/storage'
 import { createFile, openFile, writeFile, readFile } from '../utils/fileOperations'
+import { encryptData, decryptData, isEncryptedData } from '../utils/encryption'
+import { useAuth } from './AuthContext'
 
 const HealthDataContext = createContext()
 
 export function HealthDataProvider({ children }) {
+  const { user } = useAuth()
+  const userEmail = user?.email
+  
   const [moodEntries, setMoodEntries] = useState([])
   const [sleepEntries, setSleepEntries] = useState([])
   const [waterEntries, setWaterEntries] = useState([])
   const [waterGoal, setWaterGoal] = useState(() => {
-    const saved = localStorage.getItem('waterGoal')
-    return saved ? JSON.parse(saved) : 8
+    return 8
   })
   const [isLoaded, setIsLoaded] = useState(false)
   const [fileHandle, setFileHandle] = useState(null)
-  const [fileStatus, setFileStatus] = useState('none') // 'none', 'saving', 'saved', 'error'
+  const [fileStatus, setFileStatus] = useState('none')
   const fileHandleRef = useRef(null)
 
   // Load data on startup
   useEffect(() => {
     async function initialize() {
+      if (!userEmail) {
+        setMoodEntries([])
+        setSleepEntries([])
+        setWaterEntries([])
+        setIsLoaded(true)
+        return
+      }
+      
       // Load from localStorage first
-      const loaded = loadData()
-      setMoodEntries(Array.isArray(loaded.moodEntries) ? loaded.moodEntries : [])
-      setSleepEntries(Array.isArray(loaded.sleepEntries) ? loaded.sleepEntries : [])
-      setWaterEntries(Array.isArray(loaded.waterEntries) ? loaded.waterEntries : [])
+      const loaded = await loadData(userEmail)
+      
+      if (loaded && isEncryptedData(loaded)) {
+        const decrypted = await decryptData(loaded, userEmail)
+        if (decrypted) {
+          setMoodEntries(Array.isArray(decrypted.moodEntries) ? decrypted.moodEntries : [])
+          setSleepEntries(Array.isArray(decrypted.sleepEntries) ? decrypted.sleepEntries : [])
+          setWaterEntries(Array.isArray(decrypted.waterEntries) ? decrypted.waterEntries : [])
+        } else {
+          setMoodEntries([])
+          setSleepEntries([])
+          setWaterEntries([])
+        }
+      } else if (loaded && !isEncryptedData(loaded)) {
+        setMoodEntries(Array.isArray(loaded.moodEntries) ? loaded.moodEntries : [])
+        setSleepEntries(Array.isArray(loaded.sleepEntries) ? loaded.sleepEntries : [])
+        setWaterEntries(Array.isArray(loaded.waterEntries) ? loaded.waterEntries : [])
+      } else {
+        setMoodEntries([])
+        setSleepEntries([])
+        setWaterEntries([])
+      }
       setIsLoaded(true)
       
       // Try to set up file auto-save
@@ -37,17 +67,36 @@ export function HealthDataProvider({ children }) {
           
           // Load data from file if it's newer
           const fileData = await readFile(handle)
-          if (fileData?.moodEntries || fileData?.sleepEntries || fileData?.waterEntries) {
-            const fileDate = fileData.lastSaved ? new Date(fileData.lastSaved) : null
-            const storageDate = loaded.moodEntries.length > 0 
-              ? new Date(Math.max(...loaded.moodEntries.map(e => e.id))) 
-              : null
+          if (fileData) {
+            let moodData = []
+            let sleepData = []
+            let waterData = []
             
-            if (!storageDate || (fileDate && fileDate > storageDate)) {
-              setMoodEntries(Array.isArray(fileData.moodEntries) ? fileData.moodEntries : [])
-              setSleepEntries(Array.isArray(fileData.sleepEntries) ? fileData.sleepEntries : [])
-              setWaterEntries(Array.isArray(fileData.waterEntries) ? fileData.waterEntries : [])
-              saveData(fileData.moodEntries || [], fileData.sleepEntries || [], fileData.waterEntries || [])
+            if (isEncryptedData(fileData)) {
+              const decrypted = decryptData(fileData, userEmail)
+              if (decrypted) {
+                moodData = Array.isArray(decrypted.moodEntries) ? decrypted.moodEntries : []
+                sleepData = Array.isArray(decrypted.sleepEntries) ? decrypted.sleepEntries : []
+                waterData = Array.isArray(decrypted.waterEntries) ? decrypted.waterEntries : []
+              }
+            } else if (fileData?.moodEntries || fileData?.sleepEntries || fileData?.waterEntries) {
+              moodData = Array.isArray(fileData.moodEntries) ? fileData.moodEntries : []
+              sleepData = Array.isArray(fileData.sleepEntries) ? fileData.sleepEntries : []
+              waterData = Array.isArray(fileData.waterEntries) ? fileData.waterEntries : []
+            }
+            
+            if (moodData.length > 0 || sleepData.length > 0 || waterData.length > 0) {
+              const fileDate = fileData.lastSaved ? new Date(fileData.lastSaved) : null
+              const storageDate = moodEntries.length > 0 
+                ? new Date(Math.max(...moodEntries.map(e => e.id))) 
+                : null
+              
+              if (!storageDate || (fileDate && fileDate > storageDate)) {
+                setMoodEntries(moodData)
+                setSleepEntries(sleepData)
+                setWaterEntries(waterData)
+                await saveData(userEmail, moodData, sleepData, waterData)
+              }
             }
           }
         }
@@ -58,43 +107,58 @@ export function HealthDataProvider({ children }) {
           fileHandleRef.current = handle
           setFileHandle(handle)
           saveFileHandleInfo(handle)
-          await writeFile(handle, {
-            moodEntries: loaded.moodEntries,
-            sleepEntries: loaded.sleepEntries || [],
-            waterEntries: loaded.waterEntries || [],
+          await writeFile(handle, await encryptData({
+            moodEntries: moodEntries,
+            sleepEntries: sleepEntries || [],
+            waterEntries: waterEntries || [],
             lastSaved: new Date().toISOString()
-          })
+          }, userEmail))
         }
       }
     }
     
     initialize()
-  }, [])
+  }, [userEmail])
 
   // Auto-save to localStorage and file when data changes
   useEffect(() => {
-    if (isLoaded) {
-      saveData(moodEntries, sleepEntries, waterEntries)
-      saveToFile()
+    if (isLoaded && userEmail) {
+      saveData(userEmail, moodEntries, sleepEntries, waterEntries).then(() => {
+        saveToFile()
+      })
     }
-  }, [moodEntries, sleepEntries, waterEntries, isLoaded])
+  }, [moodEntries, sleepEntries, waterEntries, isLoaded, userEmail])
 
-  // Save water goal separately
+  // Load water goal for current user
   useEffect(() => {
-    localStorage.setItem('waterGoal', JSON.stringify(waterGoal))
-  }, [waterGoal])
+    if (userEmail) {
+      const saved = localStorage.getItem(`waterGoal_${userEmail}`)
+      if (saved) {
+        setWaterGoal(JSON.parse(saved))
+      } else {
+        setWaterGoal(8)
+      }
+    }
+  }, [userEmail])
+
+  // Save water goal separately (per user)
+  useEffect(() => {
+    if (userEmail) {
+      localStorage.setItem(`waterGoal_${userEmail}`, JSON.stringify(waterGoal))
+    }
+  }, [waterGoal, userEmail])
 
   async function saveToFile() {
     const handle = fileHandleRef.current
-    if (!handle) return
+    if (!handle || !userEmail) return
 
     setFileStatus('saving')
-    const success = await writeFile(handle, {
+    const success = await writeFile(handle, await encryptData({
       moodEntries,
       sleepEntries,
       waterEntries,
       lastSaved: new Date().toISOString()
-    })
+    }, userEmail))
     
     if (success) {
       setFileStatus('saved')
@@ -118,6 +182,8 @@ export function HealthDataProvider({ children }) {
   }
 
   async function loadFromFile() {
+    if (!userEmail) return false
+    
     const handle = await openFile()
     if (handle) {
       fileHandleRef.current = handle
@@ -125,16 +191,31 @@ export function HealthDataProvider({ children }) {
       saveFileHandleInfo(handle)
       
       const data = await readFile(handle)
-      if (data?.moodEntries || data?.sleepEntries || data?.waterEntries) {
-        setMoodEntries(Array.isArray(data.moodEntries) ? data.moodEntries : [])
-        setSleepEntries(Array.isArray(data.sleepEntries) ? data.sleepEntries : [])
-        setWaterEntries(Array.isArray(data.waterEntries) ? data.waterEntries : [])
-        saveData(
-          Array.isArray(data.moodEntries) ? data.moodEntries : [],
-          Array.isArray(data.sleepEntries) ? data.sleepEntries : [],
-          Array.isArray(data.waterEntries) ? data.waterEntries : []
-        )
-        return true
+      if (data) {
+        let moodData = []
+        let sleepData = []
+        let waterData = []
+        
+        if (isEncryptedData(data)) {
+          const decrypted = await decryptData(data, userEmail)
+          if (decrypted) {
+            moodData = Array.isArray(decrypted.moodEntries) ? decrypted.moodEntries : []
+            sleepData = Array.isArray(decrypted.sleepEntries) ? decrypted.sleepEntries : []
+            waterData = Array.isArray(decrypted.waterEntries) ? decrypted.waterEntries : []
+          }
+        } else if (data?.moodEntries || data?.sleepEntries || data?.waterEntries) {
+          moodData = Array.isArray(data.moodEntries) ? data.moodEntries : []
+          sleepData = Array.isArray(data.sleepEntries) ? data.sleepEntries : []
+          waterData = Array.isArray(data.waterEntries) ? data.waterEntries : []
+        }
+        
+        if (moodData.length > 0 || sleepData.length > 0 || waterData.length > 0) {
+          setMoodEntries(moodData)
+          setSleepEntries(sleepData)
+          setWaterEntries(waterData)
+          await saveData(userEmail, moodData, sleepData, waterData)
+          return true
+        }
       }
     }
     return false

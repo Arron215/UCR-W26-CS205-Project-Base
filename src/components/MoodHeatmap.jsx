@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useHealthData } from '../context/HealthDataContext'
+import { useI18n } from '../context/I18nContext'
 
 const MOOD_COLORS = {
   1: 'bg-red-400',
@@ -11,6 +12,7 @@ const MOOD_COLORS = {
 
 function MoodHeatmap() {
   const { moodEntries } = useHealthData()
+  const { t } = useI18n()
 
   const { weeks, months } = useMemo(() => {
     const today = new Date()
@@ -85,29 +87,29 @@ function MoodHeatmap() {
   }
 
   const getTitle = (day) => {
-    if (!day) return 'No data'
-    if (day.avg === null) return `${day.date}: No entries`
-    const labels = { 1: 'Very Low', 2: 'Low', 3: 'Neutral', 4: 'Good', 5: 'Excellent' }
-    return `${day.date}: ${labels[day.avg]} (${day.moods.length} entries)`
+    if (!day) return t('noData')
+    if (day.avg === null) return `${day.date}: ${t('noData')}`
+    const labels = { 1: t('veryLowDesc'), 2: t('lowDesc'), 3: t('neutralDesc'), 4: t('goodDesc'), 5: t('excellentDesc') }
+    return `${day.date}: ${labels[day.avg]} (${day.moods.length} ${t('entries')})`
   }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-          Mood Calendar
+          {t('moodCalendar')}
         </h3>
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-gray-500 dark:text-gray-400">Less</span>
+          <span className="text-gray-500 dark:text-gray-400">{t('less')}</span>
           <div className="flex gap-0.5">
             <div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-700" />
-            <div className="w-3 h-3 rounded-sm bg-red-400" title="Very Low" />
-            <div className="w-3 h-3 rounded-sm bg-orange-400" title="Low" />
-            <div className="w-3 h-3 rounded-sm bg-yellow-400" title="Neutral" />
-            <div className="w-3 h-3 rounded-sm bg-green-300" title="Good" />
-            <div className="w-3 h-3 rounded-sm bg-green-500" title="Excellent" />
+            <div className="w-3 h-3 rounded-sm bg-red-400" title={t('veryLowDesc')} />
+            <div className="w-3 h-3 rounded-sm bg-orange-400" title={t('lowDesc')} />
+            <div className="w-3 h-3 rounded-sm bg-yellow-400" title={t('neutralDesc')} />
+            <div className="w-3 h-3 rounded-sm bg-green-300" title={t('goodDesc')} />
+            <div className="w-3 h-3 rounded-sm bg-green-500" title={t('excellentDesc')} />
           </div>
-          <span className="text-gray-500 dark:text-gray-400">More</span>
+          <span className="text-gray-500 dark:text-gray-400">{t('more')}</span>
         </div>
       </div>
 

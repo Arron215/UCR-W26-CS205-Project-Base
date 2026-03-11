@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useHealthData } from '../context/HealthDataContext'
+import { useI18n } from '../context/I18nContext'
 import { getTodayFormatted } from '../utils/helpers'
 
-const GLASS_SIZE = 1 // each click adds 1 glass
+const GLASS_SIZE = 1
 
 function WaterTracker() {
   const { waterEntries, waterGoal, addWaterEntry, deleteWaterEntry, setWaterGoal } = useHealthData()
   const [showGoalInput, setShowGoalInput] = useState(false)
   const [goalValue, setGoalValue] = useState(waterGoal)
   const [activeView, setActiveView] = useState('log')
+  const { t } = useI18n()
 
   const today = getTodayFormatted()
   const todayEntries = Array.isArray(waterEntries) 
@@ -40,7 +42,7 @@ function WaterTracker() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
-        Water Intake
+        {t('waterIntake')}
       </h2>
       
       <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
@@ -53,7 +55,7 @@ function WaterTracker() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
-            Track
+            {t('track')}
           </button>
           <button
             onClick={() => setActiveView('history')}
@@ -63,7 +65,7 @@ function WaterTracker() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
-            History
+            {t('history')}
           </button>
           <button
             onClick={() => setActiveView('settings')}
@@ -73,7 +75,7 @@ function WaterTracker() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
-            Goal
+            {t('settings')}
           </button>
         </nav>
       </div>
@@ -83,10 +85,10 @@ function WaterTracker() {
           <div className="mb-6">
             <div className="flex justify-between items-end mb-2">
               <span className="text-gray-600 dark:text-gray-300">
-                Today&apos;s Progress
+                {t('todaysProgress')}
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {todayTotal} / {waterGoal} glasses
+                {todayTotal} / {waterGoal} {t('glasses')}
               </span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
@@ -99,7 +101,7 @@ function WaterTracker() {
             </div>
             {isGoalReached && (
               <p className="mt-2 text-green-600 dark:text-green-400 font-medium text-center">
-                Goal reached! Great job!
+                {t('goalReached')}
               </p>
             )}
           </div>
@@ -109,13 +111,13 @@ function WaterTracker() {
             className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <span className="text-2xl">💧</span>
-            Add 1 Glass
+            {t('addGlass')}
           </button>
 
           {todayEntries.length > 0 && (
             <div className="mt-6">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Today&apos;s entries:
+                {t('todaysEntries')}
               </p>
               <div className="space-y-1 max-h-32 overflow-y-auto">
                 {[...todayEntries].sort((a, b) => b.id - a.id).map((entry) => (
@@ -124,7 +126,7 @@ function WaterTracker() {
                     className="flex justify-between items-center text-sm bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded"
                   >
                     <span className="text-gray-700 dark:text-gray-300">
-                      {entry.glasses} glass{entry.glasses > 1 ? 'es' : ''}
+                      {entry.glasses} {entry.glasses > 1 ? t('glasses') : t('glasses')}
                     </span>
                     <span className="text-gray-500 dark:text-gray-400">
                       {entry.time}
@@ -141,7 +143,7 @@ function WaterTracker() {
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {!waterEntries || waterEntries.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              No water entries yet. Start tracking!
+              {t('noWaterEntries')}
             </p>
           ) : (
             [...waterEntries]
@@ -153,7 +155,7 @@ function WaterTracker() {
                 >
                   <div>
                     <span className="font-medium text-gray-800 dark:text-white">
-                      {entry.glasses} glass{entry.glasses > 1 ? 'es' : ''}
+                      {entry.glasses} {t('glasses')}
                     </span>
                     <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">
                       • {entry.date} at {entry.time}
@@ -161,13 +163,13 @@ function WaterTracker() {
                   </div>
                   <button
                     onClick={() => {
-                      if (window.confirm('Delete this entry?')) {
+                      if (window.confirm(t('confirmDeleteWater'))) {
                         deleteWaterEntry(entry.id)
                       }
                     }}
                     className="text-red-500 hover:text-red-700 font-medium text-sm px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900 transition-colors"
                   >
-                    Delete
+                    {t('deleteEntry')}
                   </button>
                 </div>
               ))
@@ -178,7 +180,7 @@ function WaterTracker() {
       {activeView === 'settings' && (
         <div>
           <p className="text-gray-600 dark:text-gray-300 mb-4">
-            Set your daily water intake goal (in glasses).
+            {t('setGoal')}
           </p>
           
           {showGoalInput ? (
@@ -195,7 +197,7 @@ function WaterTracker() {
                 onClick={handleSaveGoal}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
               >
-                Save
+                {t('change')}
               </button>
               <button
                 onClick={() => setShowGoalInput(false)}
@@ -207,9 +209,9 @@ function WaterTracker() {
           ) : (
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Current goal</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('currentGoal')}</p>
                 <p className="text-2xl font-semibold text-gray-800 dark:text-white">
-                  {waterGoal} glasses/day
+                  {waterGoal} {t('glassesPerDay')}
                 </p>
               </div>
               <button
@@ -219,7 +221,7 @@ function WaterTracker() {
                 }}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
               >
-                Change
+                {t('change')}
               </button>
             </div>
           )}

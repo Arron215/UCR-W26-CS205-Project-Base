@@ -1,18 +1,23 @@
 import { useState } from 'react'
 import { useHealthData } from '../context/HealthDataContext'
+import { useI18n } from '../context/I18nContext'
 import { getTodayFormatted } from '../utils/helpers'
-
-const MOOD_LABELS = {
-  1: 'Very Low',
-  2: 'Low',
-  3: 'Neutral',
-  4: 'Good',
-  5: 'Excellent',
-}
 
 function MoodTracker() {
   const { moodEntries, addMoodEntry, deleteMoodEntry } = useHealthData()
   const [selectedMood, setSelectedMood] = useState(null)
+  const { t } = useI18n()
+
+  const getMoodLabel = (mood) => {
+    const labels = {
+      1: t('veryLow'),
+      2: t('low'),
+      3: t('neutral'),
+      4: t('good'),
+      5: t('excellent'),
+    }
+    return labels[mood] || t('neutral')
+  }
 
   const handleSelectMood = (mood) => {
     setSelectedMood(mood)
@@ -35,17 +40,17 @@ function MoodTracker() {
     setSelectedMood(null)
   }
 
-  const latestEntry = moodEntries.length > 0
+  const latestEntry = moodEntries && moodEntries.length > 0
     ? [...moodEntries].sort((a, b) => b.id - a.id)[0]
     : null
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        Mood Tracker
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
+        {t('moodTracker')}
       </h2>
-      <p className="text-gray-600 mb-4">
-        Select how you&apos;re feeling and then submit. Date and time are recorded automatically.
+      <p className="text-gray-600 dark:text-gray-300 mb-4">
+        {t('moodDescription')}
       </p>
 
       <div className="flex justify-between mb-6 space-x-2">
@@ -56,16 +61,16 @@ function MoodTracker() {
             className={`flex-1 py-3 rounded-lg font-semibold border transition-colors ${
               selectedMood === mood
                 ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-gray-50 text-gray-800 border-gray-300 hover:bg-gray-100'
+                : 'bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
             }`}
           >
             <div className="text-lg">{mood}</div>
             <div
               className={`text-xs mt-1 ${
-                selectedMood === mood ? 'text-white' : 'text-gray-600'
+                selectedMood === mood ? 'text-white' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
-              {MOOD_LABELS[mood]}
+              {getMoodLabel(mood)}
             </div>
           </button>
         ))}
@@ -77,28 +82,28 @@ function MoodTracker() {
         className={`w-full mb-6 py-2 px-4 rounded-lg font-medium transition-colors ${
           selectedMood
             ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 cursor-not-allowed'
         }`}
       >
-        Save how I feel
+        {t('saveMood')}
       </button>
 
       {latestEntry && (
-        <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-1">Last recorded mood:</p>
-          <p className="text-lg font-semibold text-indigo-700">
-            {latestEntry.mood} – {MOOD_LABELS[latestEntry.mood] || 'Mood'}
+        <div className="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{t('lastRecordedMood')}</p>
+          <p className="text-lg font-semibold text-indigo-700 dark:text-indigo-400">
+            {latestEntry.mood} – {getMoodLabel(latestEntry.mood)}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {latestEntry.date} at {latestEntry.time}
           </p>
         </div>
       )}
 
       <div className="space-y-2 max-h-64 overflow-y-auto">
-        {moodEntries.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">
-            No moods logged yet. Choose how you feel to get started.
+        {!moodEntries || moodEntries.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+            {t('noMoodsYet')}
           </p>
         ) : (
           [...moodEntries]
@@ -106,26 +111,26 @@ function MoodTracker() {
             .map((entry) => (
               <div
                 key={entry.id}
-                className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
               >
                 <div>
-                  <span className="font-medium text-gray-800">
-                    {entry.mood} – {MOOD_LABELS[entry.mood] || 'Mood'}
+                  <span className="font-medium text-gray-800 dark:text-white">
+                    {entry.mood} – {getMoodLabel(entry.mood)}
                   </span>
-                  <span className="text-gray-500 text-sm ml-2">
+                  <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">
                     • {entry.date} at {entry.time}
                   </span>
                 </div>
                 <button
                   onClick={() => {
-                    if (window.confirm('Delete this mood entry?')) {
+                    if (window.confirm(t('confirmDelete'))) {
                       deleteMoodEntry(entry.id)
                     }
                   }}
-                  className="text-red-500 hover:text-red-700 font-medium text-sm px-2 py-1 rounded hover:bg-red-50 transition-colors"
-                  title="Delete this entry"
+                  className="text-red-500 hover:text-red-700 font-medium text-sm px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                  title={t('deleteEntry')}
                 >
-                  Delete
+                  {t('deleteEntry')}
                 </button>
               </div>
             ))
