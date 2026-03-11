@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { HealthDataProvider } from './context/HealthDataContext'
 import MoodTracker from './modules/MoodTracker'
 import SleepTracker from './modules/SleepTracker'
+import WaterTracker from './modules/WaterTracker'
 import DailyGraph from './components/DailyGraph'
 import WeeklyGraph from './components/WeeklyGraph'
 import HistoryView from './components/HistoryView'
@@ -102,6 +103,7 @@ function AppContent() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <MoodTracker />
                 <SleepTracker />
+                <WaterTracker />
                 <DailyGraph />
                 <WeeklyGraph />
               </div>

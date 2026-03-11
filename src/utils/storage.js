@@ -9,6 +9,7 @@ export function loadData() {
       return {
         moodEntries: data.moodEntries || [],
         sleepEntries: data.sleepEntries || [],
+        waterEntries: data.waterEntries || [],
       }
     }
   } catch (error) {
@@ -17,12 +18,13 @@ export function loadData() {
   return {
     moodEntries: [],
     sleepEntries: [],
+    waterEntries: [],
   }
 }
 
-export function saveData(moodEntries, sleepEntries) {
+export function saveData(moodEntries, sleepEntries, waterEntries) {
   try {
-    const data = { moodEntries, sleepEntries }
+    const data = { moodEntries, sleepEntries, waterEntries }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   } catch (error) {
     console.error('Error saving to localStorage:', error)
